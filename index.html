@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SUKI ODAZ — แพลนงานฉบับชิล</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chonburi&family=Mitr:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBF7F0; --paper-dim:#F3ECE0; --ink:#3A332E; --ink-soft:#77695F; --line:#E7DCC9;
+    --card-shadow: 0 3px 10px rgba(58,51,46,.08), 0 1px 2px rgba(58,51,46,.06);
+    --c-assignment:#4C7BA8; --c-assignment-bg:#E7EFF6; --c-assignment-dark:#33587D;
+    --c-department:#8757A0; --c-department-bg:#F1E9F5; --c-department-dark:#623C77;
+    --c-faculty:#C97F1E;    --c-faculty-bg:#FBEFDA;    --c-faculty-dark:#8F5A11;
+    --c-club:#3E9468;       --c-club-bg:#E5F3EB;       --c-club-dark:#296B48;
+    --c-general:#C15C7C;    --c-general-bg:#FAEBF0;    --c-general-dark:#8C3D57;
+    --red:#C0533F; --red-bg:#FBE9E5; --amber:#C98A2E; --amber-bg:#FBF0DC; --green:#3E9468; --green-bg:#E5F3EB;
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{
+    background: radial-gradient(circle at 8% 12%, rgba(201,143,44,.05), transparent 40%),
+                radial-gradient(circle at 92% 85%, rgba(135,87,160,.05), transparent 40%), var(--paper);
+    color:var(--ink); font-family:'Mitr', sans-serif; font-weight:400; min-height:100vh; -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;} button{font-family:inherit;cursor:pointer;} input,select,textarea{font-family:inherit;}
+  .app{max-width:980px;margin:0 auto;padding:20px 18px 100px;}
+
+  .header{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px;}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{
+    width:46px;height:46px;border-radius:14px; background:linear-gradient(135deg,var(--c-faculty),var(--c-general));
+    display:flex;align-items:center;justify-content:center; font-size:22px;flex-shrink:0; transform:rotate(-6deg); box-shadow:var(--card-shadow);
+  }
+  .brand h1{font-family:'Chonburi', cursive; font-size:28px; margin:0; letter-spacing:.5px; color:var(--ink); line-height:1.1;}
+  .brand p{margin:2px 0 0;font-size:13px;color:var(--ink-soft);}
+
+  .tabbar{display:flex;gap:4px;background:var(--paper-dim);padding:5px;border-radius:14px;border:1px solid var(--line);overflow-x:auto;}
+  .tabbar button{
+    border:none;background:transparent;padding:9px 16px;border-radius:10px; font-size:14px;font-weight:500;color:var(--ink-soft);
+    display:flex;align-items:center;gap:6px; transition:.18s; white-space:nowrap;
+  }
+  .tabbar button.active{background:var(--paper);color:var(--ink);box-shadow:var(--card-shadow);font-weight:600;}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 18px;}
+  .chip{
+    border:1.5px solid var(--line);background:var(--paper); padding:6px 13px;border-radius:999px;font-size:12.5px;font-weight:500;
+    color:var(--ink-soft);display:flex;align-items:center;gap:6px; transition:.15s; cursor:pointer;
+  }
+  .chip .dot{width:8px;height:8px;border-radius:50%;}
+  .chip.active{color:#fff;border-color:transparent;}
+
+  .view{display:none;} .view.active{display:block;animation:fadeIn .25s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+  .cal-card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:var(--card-shadow);}
+  .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:0 4px;}
+  .cal-nav h2{font-size:18px;margin:0;font-weight:600;}
+  .cal-nav-btns{display:flex;gap:6px;}
+  .cal-nav button{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--paper-dim);font-size:16px;color:var(--ink);display:flex;align-items:center;justify-content:center;}
+  .cal-nav button:hover{background:var(--line);}
+  .cal-today-btn{border:1px solid var(--line);background:var(--paper-dim);border-radius:10px;padding:0 12px;font-size:12.5px;color:var(--ink-soft);font-weight:500;height:34px;}
+  .weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:12px;color:var(--ink-soft);margin-bottom:6px;font-weight:600;}
+  .weekdays div{padding:6px 0;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+  .day-cell{border-radius:12px;border:1px solid transparent;background:var(--paper-dim);padding:5px;display:flex;flex-direction:column;position:relative;min-height:85px;transition:.15s; overflow:hidden;}
+  .day-cell.empty{background:transparent;}
+  .day-cell:not(.empty):hover{border-color:var(--line);background:var(--paper);cursor:pointer;}
+  .day-cell .num{font-size:12.5px;font-weight:500;color:var(--ink-soft); margin-bottom:2px;}
+  .day-cell.today{background:linear-gradient(135deg,var(--amber-bg),var(--paper));}
+  .day-cell.today .num{color:var(--amber);font-weight:700;}
+  .day-cell.today::after{content:'';position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;background:var(--amber);}
+  .holiday-label{font-size:9.5px; font-weight:600; color:var(--red); line-height:1.1; margin-bottom:3px; word-break:break-word;}
+  .cal-task-pill{font-size:10px; color:#fff; padding:2px 5px; border-radius:5px; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;}
+  .day-more{font-size:10px; color:var(--ink-soft); font-weight:500; margin-top:auto;}
+
+  .kanban-board{display:flex; gap:16px; overflow-x:auto; padding-bottom:16px; scroll-snap-type: x mandatory; scroll-padding: 0 16px; -webkit-overflow-scrolling: touch;}
+  .kanban-col{flex: 1 0 280px; max-width: 350px; background:var(--paper-dim); border-radius:18px; padding:14px; border:2px dashed transparent; transition:.2s ease; display:flex; flex-direction:column; scroll-snap-align: start;}
+  @media(min-width:920px){ .kanban-col { max-width: none; } }
+  .kanban-col.drag-over{border-color:var(--ink-soft); background:var(--paper);}
+  .kanban-col h3{font-size:15.5px;margin:0 0 14px;font-weight:600;display:flex;align-items:center;justify-content:space-between;color:var(--ink);}
+  .kanban-col h3 span{font-size:12px;background:var(--line);padding:2px 8px;border-radius:999px;font-weight:500;}
+  .kanban-cards{display:flex;flex-direction:column;gap:10px;flex-grow:1;min-height:50px;}
+  .task-card[draggable="true"] { cursor: grab; }
+  .task-card[draggable="true"]:active { cursor: grabbing; }
+  .task-card.dragging { opacity: 0.4; transform: scale(0.96); box-shadow: none; border-color:var(--ink-soft); }
+
+  .empty-state{text-align:center;padding:60px 20px;color:var(--ink-soft);}
+  .empty-state .big{font-size:38px;margin-bottom:10px;}
+  .empty-state p{margin:4px 0;font-size:14px;}
+  .date-group{margin-bottom:22px;}
+  .date-group-head{display:flex;align-items:baseline;gap:10px;margin-bottom:9px;padding:0 2px;flex-wrap:wrap;}
+  .date-group-head .d{font-size:15px;font-weight:600;}
+  .badge{font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:999px;}
+  .badge.overdue{background:var(--red-bg);color:var(--red);} .badge.today{background:var(--amber-bg);color:var(--amber);}
+  .badge.soon{background:var(--amber-bg);color:var(--amber);} .badge.normal{background:var(--green-bg);color:var(--green);}
+  .task-card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px 14px 12px;margin-bottom:10px;box-shadow:var(--card-shadow);position:relative;overflow:hidden; transition: transform .15s, opacity .15s;}
+  .task-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:5px;}
+  .task-card.assignment::before{background:var(--c-assignment);} .task-card.department::before{background:var(--c-department);}
+  .task-card.faculty::before{background:var(--c-faculty);} .task-card.club::before{background:var(--c-club);} .task-card.general::before{background:var(--c-general);}
+  .task-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .task-title{font-size:15px;font-weight:600;margin:0 0 4px;padding-left:6px; line-height:1.3;}
+  .task-tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:4px;margin-left:6px;}
+  .task-tag.assignment{background:var(--c-assignment-bg);color:var(--c-assignment-dark);} .task-tag.department{background:var(--c-department-bg);color:var(--c-department-dark);}
+  .task-tag.faculty{background:var(--c-faculty-bg);color:var(--c-faculty-dark);} .task-tag.club{background:var(--c-club-bg);color:var(--c-club-dark);}
+  .task-tag.general{background:var(--c-general-bg);color:var(--c-general-dark);}
+  .task-meta{padding-left:6px;font-size:12.5px;color:var(--ink-soft);line-height:1.6;margin-top:2px;} .task-meta b{color:var(--ink);font-weight:500;}
+  .task-link{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;color:var(--c-assignment-dark);margin-top:6px;text-decoration:none;word-break:break-all;}
+  .task-actions{display:flex;gap:6px;flex-shrink:0;}
+  .icon-btn{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:var(--paper-dim);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0; cursor:pointer;}
+  .icon-btn:hover{background:var(--line);}
+
+  .fab{position:fixed;bottom:24px;right:24px;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--c-faculty),var(--c-general));color:#fff;border:none;font-size:26px;box-shadow:0 6px 18px rgba(58,51,46,.25);display:flex;align-items:center;justify-content:center;z-index:40;transition:transform .15s;}
+  .fab:hover{transform:scale(1.06) rotate(6deg);}
+
+  .overlay{position:fixed;inset:0;background:rgba(58,51,46,.42);backdrop-filter:blur(2px);display:none;align-items:flex-end;justify-content:center;z-index:100;padding:0;}
+  .overlay.show{display:flex;}
+  @media(min-width:640px){ .overlay{align-items:center;padding:20px;} }
+  .modal{background:var(--paper);width:100%;max-width:540px;max-height:92vh;overflow-y:auto;border-radius:22px 22px 0 0;padding:22px 20px 26px;position:relative;box-shadow:0 -10px 40px rgba(0,0,0,.15);}
+  @media(min-width:640px){ .modal{border-radius:22px;} }
+  .modal h3{margin:0 0 14px;font-size:18px;font-weight:600;}
+  .modal-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--paper-dim);font-size:16px;color:var(--ink-soft);cursor:pointer;}
+  .field{margin-bottom:14px;} .field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:5px;}
+  .field input[type=text], .field input[type=password], .field input[type=date], .field input[type=time], .field input[type=url], .field select, .field textarea{width:100%;border:1.5px solid var(--line);background:var(--paper);border-radius:11px;padding:10px 12px;font-size:14px;color:var(--ink);}
+  .field textarea{resize:vertical;min-height:64px;} .field input:focus, .field select:focus, .field textarea:focus{outline:none;border-color:var(--c-faculty);}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  @media(max-width:420px){.row2{grid-template-columns:1fr;}}
+  .cat-picker{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;margin-bottom:16px;}
+  .cat-opt{border:1.5px solid var(--line);background:var(--paper);border-radius:13px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11.5px;font-weight:500;color:var(--ink-soft);cursor:pointer;}
+  .cat-opt .ic{font-size:18px;} .cat-opt.sel{color:#fff;border-color:transparent;}
+  .radio-group{display:flex;gap:8px;flex-wrap:wrap;} .radio-pill{border:1.5px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13px;color:var(--ink-soft);font-weight:500;cursor:pointer;}
+  .radio-pill.sel{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .modal-actions{display:flex;gap:10px;margin-top:18px;}
+  .btn{flex:1;border:none;border-radius:12px;padding:12px;font-size:14.5px;font-weight:600;}
+  .btn-primary{background:var(--ink);color:#fff;} .btn-danger{background:var(--red-bg);color:var(--red);flex:none;padding:12px 16px;} .btn-outline{background:transparent; border:1.5px solid var(--line); color:var(--ink); flex:none; padding:12px 16px;}
+  .subj-item{display:flex;justify-content:space-between;align-items:center;background:var(--paper-dim);padding:10px 14px;border-radius:10px;margin-bottom:8px; border:1px solid var(--line);}
+  .subj-info{font-size:13.5px;} .subj-code{font-weight:600;color:var(--c-faculty-dark);margin-right:6px;} .subj-del{background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:4px;}
+
+  .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 20px;border-radius:12px;font-size:13.5px;opacity:0;pointer-events:none;transition:.25s;z-index:200;box-shadow:0 6px 18px rgba(0,0,0,.2);}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="brand">
+      <div class="brand-mark">🍡</div>
+      <div>
+        <h1>SUKI ODAZ</h1>
+        <p>แพลนงานเด็กมหาลัย ฉบับชิลๆ ไม่กดดัน</p>
+      </div>
+    </div>
+    <div class="tabbar">
+      <button id="tabCalendarBtn" onclick="switchView('calendar')">📅 ปฏิทิน</button>
+      <button id="tabKanbanBtn" class="active" onclick="switchView('kanban')">📋 บอร์ดงาน</button>
+      <button id="tabListBtn" onclick="switchView('list')">📑 รายการ</button>
+      <button id="langToggleBtn" onclick="toggleLanguage()" style="color:var(--c-faculty-dark); font-weight:bold; margin-left:auto;">🇹🇭 TH</button>
+      <button id="btnLogout" onclick="logout()" style="color:var(--red);">🚪 ออกจากระบบ</button>
+    </div>
+  </div>
+
+  <div class="chips" id="filterChips"></div>
+
+  <div class="view" id="view-calendar">
+    <div class="cal-card">
+      <div class="cal-nav">
+        <div class="cal-nav-btns"><button onclick="changeMonth(-1)">‹</button><button onclick="changeMonth(1)">›</button></div>
+        <h2 id="calTitle"></h2>
+        <button class="cal-today-btn" onclick="goToday()">วันนี้</button>
+      </div>
+      <div class="weekdays"><div>อา</div><div>จ</div><div>อ</div><div>พ</div><div>พฤ</div><div>ศ</div><div>ส</div></div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </div>
+
+  <div class="view active" id="view-kanban">
+    <div class="kanban-board" id="kanbanBoard">
+      <div class="kanban-col" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'todo')">
+        <h3>To Do (รอก่อน) <span id="count-todo">0</span></h3>
+        <div class="kanban-cards" id="col-todo"></div>
+      </div>
+      <div class="kanban-col" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'in_progress')">
+        <h3>In Progress (ปั่นอยู่) <span id="count-in_progress">0</span></h3>
+        <div class="kanban-cards" id="col-in_progress"></div>
+      </div>
+      <div class="kanban-col" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'done')">
+        <h3>Done (เสร็จแล้วเว้ย) <span id="count-done">0</span></h3>
+        <div class="kanban-cards" id="col-done"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="view" id="view-list">
+    <div id="listContainer"></div>
+  </div>
+
+</div>
+
+<button class="fab" onclick="openTaskModal(null, todayStr())" aria-label="เพิ่มงาน">＋</button>
+
+<div class="overlay" id="dayOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeOverlay('dayOverlay')">✕</button>
+    <h3 id="dayModalTitle"></h3>
+    <div id="dayModalList"></div>
+    <div class="modal-actions"><button class="btn btn-primary" id="dayModalAddBtn">＋ เพิ่มงานวันนี้</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="subjectOverlay" style="z-index: 150;">
+  <div class="modal">
+    <button class="modal-close" onclick="closeOverlay('subjectOverlay')">✕</button>
+    <h3 id="subjModalTitle">จัดการรายวิชา</h3>
+    <div id="subjectList" style="margin-bottom: 16px;"></div>
+    <div style="background:var(--paper-dim); padding:14px; border-radius:12px; border:1px solid var(--line);">
+      <h4 id="subjModalAddTitle" style="margin:0 0 10px; font-size:14px; color:var(--ink);">+ เพิ่มวิชาใหม่</h4>
+      <div class="row2">
+        <div class="field"><label id="lblSubjCode">รหัสวิชา</label><input type="text" id="s_code" placeholder="เช่น ED401"></div>
+        <div class="field"><label id="lblSubjName">ชื่อวิชา</label><input type="text" id="s_name" placeholder="เช่น Teaching Practicum"></div>
+      </div>
+      <div class="field"><label id="lblSubjTeacher">ชื่ออาจารย์ผู้สอน</label><input type="text" id="s_teacher" placeholder="อ.ประจำวิชา"></div>
+      <button class="btn btn-primary" id="btnSaveSubj" style="width:100%; padding:10px;" onclick="addSubject()">บันทึกวิชา</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="taskOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeOverlay('taskOverlay')">✕</button>
+    <h3 id="taskModalTitle">เพิ่มงานใหม่</h3>
+    <div class="field"><label id="lblTaskType">ประเภทงาน</label><div class="cat-picker" id="catPicker"></div></div>
+    <div class="field"><label id="lblTaskName">ชื่องาน</label><input type="text" id="f_title" placeholder="เช่น ส่งรายงาน หรือ แผนการสอน"></div>
+    <div class="row2">
+      <div class="field"><label id="lblTaskDate">วันครบกำหนด</label><input type="date" id="f_date"></div>
+      <div class="field"><label id="lblTaskTime">เวลา (ถ้ามี)</label><input type="time" id="f_time"></div>
+    </div>
+    <div id="grp_assignment">
+      <div class="field">
+        <label style="display:flex; justify-content:space-between; align-items:center;">
+          <span id="lblTaskSubj">วิชาเรียน</span>
+          <button type="button" class="btn-outline" id="btnManageSubj" style="padding:2px 8px; font-size:11px; border-radius:6px;" onclick="openSubjectModal()">⚙️ จัดการวิชา</button>
+        </label>
+        <select id="f_subject_select"><option value="">-- เลือกวิชา (หรือไม่ระบุก็ได้) --</option></select>
+      </div>
+      <div class="field">
+        <label id="lblTaskSubmit">วิธีการส่ง</label>
+        <select id="f_submit">
+          <option value="ส่งออนไลน์ (e-learning/Classroom)" id="optSubmitOnline">ส่งออนไลน์ (e-learning/Classroom)</option>
+          <option value="ส่งเอกสาร/กระดาษ" id="optSubmitPaper">ส่งเอกสาร/กระดาษ</option>
+          <option value="ส่งทางอีเมล" id="optSubmitEmail">ส่งทางอีเมล</option>
+          <option value="อื่นๆ" id="optSubmitOther">อื่นๆ</option>
+        </select>
+      </div>
+      <div class="field">
+        <label id="lblTaskWorkType">รูปแบบงาน</label>
+        <div class="radio-group" id="workTypeGroup">
+          <div class="radio-pill sel" data-v="เดี่ยว" id="radSingle">เดี่ยว</div>
+          <div class="radio-pill" data-v="คู่" id="radPair">คู่</div>
+          <div class="radio-pill" data-v="กลุ่ม" id="radGroup">กลุ่ม</div>
+        </div>
+      </div>
+      <div class="field" id="teammatesField" style="display:none;"><label id="lblTaskTeammates">ชื่อเพื่อนร่วมงาน</label><input type="text" id="f_teammates" placeholder="คั่นชื่อด้วยจุลภาค เช่น มิ้นท์, ปัน"></div>
+    </div>
+    <div id="grp_org">
+      <div class="row2">
+        <div class="field"><label id="lblTaskResp">ผู้รับผิดชอบ/ผู้ประสานงาน</label><input type="text" id="f_responsible" placeholder="ชื่อผู้ดูแลงานนี้"></div>
+        <div class="field"><label id="lblTaskLoc">สถานที่</label><input type="text" id="f_location" placeholder="เช่น ห้องประชุมคณะ"></div>
+      </div>
+    </div>
+    <div class="field"><label id="lblTaskLink">ลิงก์งาน / ลิงก์ไฟล์</label><input type="url" id="f_link" placeholder="https://..."></div>
+    <div class="field"><label id="lblTaskNotes">รายละเอียดเพิ่มเติม</label><textarea id="f_notes" placeholder="โน้ตอะไรถึงตัวเองก็ใส่ตรงนี้ได้เลย"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" id="btnDel" style="display:none;" onclick="deleteCurrentTask()">ลบ</button>
+      <button class="btn btn-primary" id="btnSaveTask" onclick="saveTask()">บันทึกงาน</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="authOverlay" style="background:var(--paper); z-index:9999; align-items:center;">
+  <div class="modal" id="authModal" style="max-width:380px; text-align:center; box-shadow:var(--card-shadow); border:1px solid var(--line);">
+    <div class="brand-mark" style="margin: 0 auto 16px;">🍡</div>
+    <h2 id="authTitle" style="margin:0 0 4px; font-weight:600; font-size:22px;">เข้าสู่ระบบ</h2>
+    <p id="authSubtitle" style="font-size:13px; color:var(--ink-soft); margin-bottom:20px;">กรุณาล็อกอินเพื่อดูแพลนงานของคุณ</p>
+    <div class="field" style="text-align:left;"><label id="lblAuthId">รหัสนักศึกษา</label><input type="text" id="auth_id" placeholder="รหัสนักศึกษาของคุณ"></div>
+    <div class="field" style="text-align:left;"><label id="lblAuthPass">รหัสผ่าน</label><input type="password" id="auth_pass" placeholder="รหัสผ่าน"></div>
+    <div class="field" id="auth_pass2_wrap" style="text-align:left; display:none;"><label id="lblAuthPass2">ยืนยันรหัสผ่านอีกครั้ง</label><input type="password" id="auth_pass2" placeholder="ยืนยันรหัสผ่าน"></div>
+    <button class="btn btn-primary" id="authMainBtn" style="width:100%; margin-top:10px;" onclick="handleAuth()">ล็อกอินเลย</button>
+    <div style="margin-top:16px; font-size:13px; display:flex; justify-content:space-between; color:var(--ink-soft);">
+      <span style="cursor:pointer; text-decoration:underline;" id="authSwitchMode" onclick="switchAuthMode('register')">เพิ่งมาครั้งแรก? สมัครเลย</span>
+      <span style="cursor:pointer; text-decoration:underline;" id="authForgotBtn" onclick="switchAuthMode('forgot')">ลืมรหัสผ่าน?</span>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  // Import Firebase app initialization
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  
+  // (Optional) หากจะใช้ Database หรือระบบ Auth ในอนาคต ให้เพิ่ม import เข้ามาตรงนี้นะครับ
+  // เช่น import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBYehVwg1Ux-WmW10iPsC8PreAbbqvt5QQ",
+    authDomain: "todolist-252b6.firebaseapp.com",
+    projectId: "todolist-252b6",
+    storageBucket: "todolist-252b6.firebasestorage.app",
+    messagingSenderId: "25813460473",
+    appId: "1:25813460473:web:fe30e3f030fc867ca6c928",
+    measurementId: "G-ZRGSGSCK3X"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+</script>
+
+<script>
+/* ================= DATA & TRANSLATION ================= */
+const CATEGORIES = {
+  assignment: { th:'งาน/การบ้าน', en:'Assignments', color:'var(--c-assignment)', icon:'📘'},
+  department: { th:'งานสาขา',     en:'Department',  color:'var(--c-department)', icon:'🏫'},
+  faculty:    { th:'งานคณะ',       en:'Faculty',     color:'var(--c-faculty)',    icon:'🏛️'},
+  club:       { th:'ชมรม',         en:'Club',        color:'var(--c-club)',       icon:'🎉'},
+  general:    { th:'งานทั่วไป',    en:'General',     color:'var(--c-general)',    icon:'📝'}
+};
+const THAI_HOLIDAYS = { '01-01':'วันขึ้นปีใหม่', '04-06':'วันจักรี', '04-13':'วันสงกรานต์', '04-14':'วันสงกรานต์', '04-15':'วันสงกรานต์', '05-01':'วันแรงงาน', '05-04':'วันฉัตรมงคล', '06-03':'วันเฉลิมฯ พระราชินี', '07-28':'วันเฉลิมฯ ร.10', '08-12':'วันแม่แห่งชาติ', '10-13':'วันนวมินทรมหาราช', '10-23':'วันปิยมหาราช', '12-05':'วันพ่อแห่งชาติ', '12-10':'วันรัฐธรรมนูญ', '12-31':'วันสิ้นปี' };
+const SYS_TRANS = {
+  'เดี่ยว': { th:'เดี่ยว', en:'Individual' }, 'คู่': { th:'คู่', en:'Pair' }, 'กลุ่ม': { th:'กลุ่ม', en:'Group' },
+  'ส่งออนไลน์ (e-learning/Classroom)': { th:'ส่งออนไลน์', en:'Online' }, 'ส่งเอกสาร/กระดาษ': { th:'ส่งเอกสาร/กระดาษ', en:'Paper' }, 'ส่งทางอีเมล': { th:'ส่งอีเมล', en:'Email' }, 'อื่นๆ': { th:'อื่นๆ', en:'Other' },
+  'ลบงานแล้ว': { th:'ลบงานแล้ว 🗑️', en:'Task deleted 🗑️' }, 'ใส่ชื่องานก่อนนะ': { th:'ใส่ชื่องานก่อนนะ', en:'Please enter a task title' }, 'เลือกวันครบกำหนดด้วยนะ': { th:'เลือกวันครบกำหนดด้วยนะ', en:'Please select a due date' }, 'เพิ่มงานเรียบร้อย 🎉': { th:'เพิ่มงานเรียบร้อย 🎉', en:'Task added 🎉' }, 'แก้ไขงานเรียบร้อย ✏️': { th:'แก้ไขงานเรียบร้อย ✏️', en:'Task updated ✏️' }, 'ย้ายวันเรียบร้อย 👍': { th:'ย้ายวันเรียบร้อย 👍', en:'Date shifted 👍' },
+  'ระบุชื่อวิชาก่อนนะ': { th:'ระบุชื่อวิชาก่อนนะ', en:'Enter subject name' }, 'เพิ่มวิชาเรียบร้อย!': { th:'เพิ่มวิชาเรียบร้อย!', en:'Subject added!' }, 'ใส่ข้อมูลให้ครบก่อนนะ!': { th:'ใส่ข้อมูลให้ครบก่อนนะ!', en:'Fill all fields!' }, 'รหัสนักศึกษานี้ลงทะเบียนไปแล้วจ้า': { th:'รหัสนักศึกษานี้ลงทะเบียนไปแล้วจ้า', en:'ID already registered' }, 'รหัสผ่านไม่ตรงกัน!': { th:'รหัสผ่านไม่ตรงกัน!', en:'Passwords do not match!' }, 'สมัครสำเร็จ! เข้าสู่ระบบแล้ว 🎉': { th:'สมัครสำเร็จ! เข้าสู่ระบบแล้ว 🎉', en:'Registered! 🎉' },
+  'ไม่พบรหัสนักศึกษานี้ ลองสมัครก่อนนะ': { th:'ไม่พบรหัสนักศึกษานี้ ลองสมัครก่อนนะ', en:'ID not found' }, 'รหัสผ่านผิดจ้า ลองใหม่นะ': { th:'รหัสผ่านผิดจ้า ลองใหม่นะ', en:'Incorrect password' }, 'ยินดีต้อนรับกลับมา! 🍡': { th:'ยินดีต้อนรับกลับมา! 🍡', en:'Welcome back! 🍡' }, 'ไม่พบรหัสนักศึกษานี้ในระบบ': { th:'ไม่พบรหัสนักศึกษานี้ในระบบ', en:'ID not found in system' }, 'รหัสผ่านใหม่ไม่ตรงกัน!': { th:'รหัสผ่านใหม่ไม่ตรงกัน!', en:'New passwords do not match!' }, 'เปลี่ยนรหัสผ่านเรียบร้อย! ล็อกอินเลย': { th:'เปลี่ยนรหัสผ่านเรียบร้อย! ล็อกอินเลย', en:'Password reset! Login now.' },
+  'ออกจากระบบแล้ว บ๊ายบาย 👋': { th:'ออกจากระบบแล้ว บ๊ายบาย 👋', en:'Logged out. Bye! 👋' }, 'toastLang': { th:'เปลี่ยนภาษาเรียบร้อย 🇹🇭', en:'Language switched 🇬🇧' }
+};
+const CAT_KEYS = Object.keys(CATEGORIES); const STORAGE_KEY = 'suki-odaz-tasks-v2'; const SUBJECTS_KEY = 'suki-odaz-subjects-v1'; const AUTH_KEY = 'suki-odaz-auth-v1'; const LANG_KEY = 'suki-odaz-lang';
+let tasks = []; let subjects = []; let activeFilters = new Set(CAT_KEYS); let currentView = 'kanban'; let calYear, calMonth; let editingTaskId = null; let selectedCategory = 'assignment'; let selectedWorkType = 'เดี่ยว'; let draggedTaskId = null;
+let currentLang = localStorage.getItem(LANG_KEY) || 'th'; let currentUser = null; let currentAuthMode = 'login';
+const LANG = {
+  th: {
+    appDesc: 'แพลนงานเด็กมหาลัย ฉบับชิลๆ ไม่กดดัน', tabCal: '📅 ปฏิทิน', tabBoard: '📋 บอร์ดงาน', tabList: '📑 รายการ', btnLogout: '🚪 ออกจากระบบ', calToday: 'วันนี้', boardTodo: 'To Do (รอก่อน)', boardInProg: 'In Progress (ปั่นอยู่)', boardDone: 'Done (เสร็จแล้วเว้ย)',
+    days: ['อา','จ','อ','พ','พฤ','ศ','ส'], months: ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'],
+    emptyList: '<div class="big">✨</div><p>ยังไม่มีงานเลย ใจฟูสุดๆ</p>', emptyDay: '<div class="big">🌤️</div><p>วันนี้ว่างงี้ ยังไม่มีงานเลย</p>',
+    overdue: 'เลยกำหนด', todayLabel: 'วันนี้!', tmrLabel: 'พรุ่งนี้', inDays: 'อีก', daysUnit: 'วัน', cardDue: 'ดิว:', cardTime: 'เวลา:', cardSubj: 'วิชา:', cardTeacher: 'อาจารย์:', cardSubmit: 'ส่งงาน:', cardType: 'รูปแบบ:', cardResp: 'รับผิดชอบ:', cardLoc: 'สถานที่:', shiftEarly: '‹ เลื่อนเร็วขึ้น 1 วัน', shiftLate: 'เลื่อนช้าลง 1 วัน ›', openLink: '🔗 เปิดลิงก์งาน', modalAddDay: '＋ เพิ่มงานวันนี้',
+    authTitle: 'เข้าสู่ระบบ', authSub: 'กรุณาล็อกอินเพื่อดูแพลนงานของคุณ', authBtn: 'ล็อกอินเลย', authId: 'รหัสนักศึกษา', authPass: 'รหัสผ่าน', authPass2: 'ยืนยันรหัสผ่านอีกครั้ง', authModeReg: 'เพิ่งมาครั้งแรก? สมัครเลย', authModeForgot: 'ลืมรหัสผ่าน?', authModeLogin: 'มีบัญชีแล้ว? ล็อกอินเลย', authModeBack: 'กลับไปหน้าล็อกอิน',
+    subjModalTitle: 'จัดการรายวิชา', subjModalAddTitle: '+ เพิ่มวิชาใหม่', emptySubj: 'ยังไม่มีวิชา เพิ่มด้านล่างได้เลยครับ', lblSubjCode: 'รหัสวิชา', lblSubjName: 'ชื่อวิชา', lblSubjTeacher: 'ชื่ออาจารย์ผู้สอน', btnSaveSubj: 'บันทึกวิชา', phSubjCode: 'เช่น ED401', phSubjName: 'เช่น Teaching Practicum', phSubjTeacher: 'อ.ประจำวิชา',
+    modalAddTitle: 'เพิ่มงานใหม่', modalEditTitle: 'แก้ไขงาน', lblTaskType: 'ประเภทงาน', lblTaskName: 'ชื่องาน', lblTaskDate: 'วันครบกำหนด', lblTaskTime: 'เวลา (ถ้ามี)', lblTaskSubj: 'วิชาเรียน', btnManageSubj: '⚙️ จัดการวิชา', optSelectSubj: '-- เลือกวิชา (หรือไม่ระบุก็ได้) --', lblTaskSubmit: 'วิธีการส่ง', lblTaskWorkType: 'รูปแบบงาน', lblTaskTeammates: 'ชื่อเพื่อนร่วมงาน', lblTaskResp: 'ผู้รับผิดชอบ/ผู้ประสานงาน', lblTaskLoc: 'สถานที่', lblTaskLink: 'ลิงก์งาน / ลิงก์ไฟล์', lblTaskNotes: 'รายละเอียดเพิ่มเติม', btnDel: 'ลบ', btnSaveTask: 'บันทึกงาน', phTaskName: 'เช่น ส่งรายงาน', phTeammates: 'คั่นชื่อด้วยจุลภาค เช่น มิ้นท์, ปัน', phResp: 'ชื่อผู้ดูแลงานนี้', phLoc: 'เช่น ห้องประชุมคณะ', phNotes: 'โน้ตอะไรถึงตัวเองก็ใส่ตรงนี้ได้เลย', yearOffset: 543
+  },
+  en: {
+    appDesc: 'Uni Planner - Chill & No Pressure', tabCal: '📅 Calendar', tabBoard: '📋 Board', tabList: '📑 List', btnLogout: '🚪 Logout', calToday: 'Today', boardTodo: 'To Do', boardInProg: 'In Progress', boardDone: 'Done',
+    days: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], months: ['January','February','March','April','May','June','July','August','September','October','November','December'],
+    emptyList: '<div class="big">✨</div><p>No tasks at all, feeling good!</p>', emptyDay: '<div class="big">🌤️</div><p>Free day! No tasks today.</p>',
+    overdue: 'Overdue', todayLabel: 'Today!', tmrLabel: 'Tomorrow', inDays: 'In', daysUnit: 'days', cardDue: 'Due:', cardTime: 'Time:', cardSubj: 'Subject:', cardTeacher: 'Instructor:', cardSubmit: 'Submit via:', cardType: 'Type:', cardResp: 'PIC:', cardLoc: 'Location:', shiftEarly: '‹ 1 Day Earlier', shiftLate: '1 Day Later ›', openLink: '🔗 Open Link', modalAddDay: '＋ Add Task',
+    authTitle: 'Login', authSub: 'Please log in to view your planner', authBtn: 'Login', authId: 'Student ID', authPass: 'Password', authPass2: 'Confirm Password', authModeReg: 'First time? Register', authModeForgot: 'Forgot Password?', authModeLogin: 'Already registered? Login', authModeBack: 'Back to Login',
+    subjModalTitle: 'Manage Subjects', subjModalAddTitle: '+ Add New Subject', emptySubj: 'No subjects yet. Add one below!', lblSubjCode: 'Course Code', lblSubjName: 'Course Name', lblSubjTeacher: 'Instructor Name', btnSaveSubj: 'Save Subject', phSubjCode: 'e.g. ED401', phSubjName: 'e.g. Teaching Practicum', phSubjTeacher: 'Instructor Name',
+    modalAddTitle: 'Add New Task', modalEditTitle: 'Edit Task', lblTaskType: 'Task Category', lblTaskName: 'Task Title', lblTaskDate: 'Due Date', lblTaskTime: 'Time (Optional)', lblTaskSubj: 'Subject', btnManageSubj: '⚙️ Manage', optSelectSubj: '-- Select Subject --', lblTaskSubmit: 'Submission Method', lblTaskWorkType: 'Work Type', lblTaskTeammates: 'Teammates', lblTaskResp: 'Person in Charge', lblTaskLoc: 'Location', lblTaskLink: 'Task Link / URL', lblTaskNotes: 'Additional Notes', btnDel: 'Delete', btnSaveTask: 'Save Task', phTaskName: 'e.g. Submit Report', phTeammates: 'Separate by commas', phResp: 'Name of PIC', phLoc: 'e.g. Meeting Room', phNotes: 'Write some notes for yourself here', yearOffset: 0
+  }
+};
+function uid(){ return 't'+Date.now()+Math.random().toString(36).slice(2,7); } function pad(n){ return n<10 ? '0'+n : ''+n; } function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); } function parseDate(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); } function daysBetween(dateStr){ return Math.round((parseDate(dateStr) - parseDate(todayStr())) / 86400000); } function escapeHtml(str){ return (!str)?'':str.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); } function translateSys(val){ return (SYS_TRANS[val]) ? SYS_TRANS[val][currentLang] : val; }
+function showToast(msg){ const t = document.getElementById('toast'); t.textContent = translateSys(msg); t.classList.add('show'); clearTimeout(showToast._timer); showToast._timer = setTimeout(()=>t.classList.remove('show'), 2200); }
+function loadData(){ try{ tasks = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; tasks.forEach(t => { if(!t.status) t.status = 'todo'; }); const storedSubjects = localStorage.getItem(SUBJECTS_KEY); if(storedSubjects) subjects = JSON.parse(storedSubjects); else { subjects = [{id:uid(),code:'ED401',name:'Teaching Practicum',teacher:'อ.นิเทศก์'}]; saveSubjects(); } }catch(e){ tasks = []; } }
+function persistTasks(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); } function saveSubjects(){ localStorage.setItem(SUBJECTS_KEY, JSON.stringify(subjects)); }
+
+/* ================= AUTH SYSTEM ================= */
+function switchAuthMode(mode) { currentAuthMode = mode; document.getElementById('auth_id').value = ''; document.getElementById('auth_pass').value = ''; document.getElementById('auth_pass2').value = ''; applyLangUI(); document.getElementById('auth_pass2_wrap').style.display = (mode==='login') ? 'none' : 'block'; document.getElementById('authForgotBtn').style.display = (mode==='login') ? 'block' : 'none'; }
+function handleAuth() {
+  const s_id = document.getElementById('auth_id').value.trim(); const s_pass = document.getElementById('auth_pass').value.trim(); const s_pass2 = document.getElementById('auth_pass2').value.trim();
+  if(!s_id || !s_pass) return showToast('ใส่ข้อมูลให้ครบก่อนนะ!');
+  let users = JSON.parse(localStorage.getItem(AUTH_KEY) || '{}');
+  if(currentAuthMode === 'register') { if(users[s_id]) return showToast('รหัสนักศึกษานี้ลงทะเบียนไปแล้วจ้า'); if(s_pass !== s_pass2) return showToast('รหัสผ่านไม่ตรงกัน!'); users[s_id] = { password: s_pass }; localStorage.setItem(AUTH_KEY, JSON.stringify(users)); showToast('สมัครสำเร็จ! เข้าสู่ระบบแล้ว 🎉'); loginSuccess(s_id); } 
+  else if(currentAuthMode === 'login') { if(!users[s_id]) return showToast('ไม่พบรหัสนักศึกษานี้ ลองสมัครก่อนนะ'); if(users[s_id].password !== s_pass) return showToast('รหัสผ่านผิดจ้า ลองใหม่นะ'); showToast('ยินดีต้อนรับกลับมา! 🍡'); loginSuccess(s_id); } 
+  else if(currentAuthMode === 'forgot') { if(!users[s_id]) return showToast('ไม่พบรหัสนักศึกษานี้ในระบบ'); if(s_pass !== s_pass2) return showToast('รหัสผ่านใหม่ไม่ตรงกัน!'); users[s_id].password = s_pass; localStorage.setItem(AUTH_KEY, JSON.stringify(users)); showToast('เปลี่ยนรหัสผ่านเรียบร้อย! ล็อกอินเลย'); switchAuthMode('login'); }
+}
+function loginSuccess(s_id) { currentUser = s_id; sessionStorage.setItem('suki-current-user', s_id); document.getElementById('authOverlay').classList.remove('show'); initApp(); }
+function logout() { currentUser = null; sessionStorage.removeItem('suki-current-user'); document.getElementById('auth_id').value = ''; document.getElementById('auth_pass').value = ''; switchAuthMode('login'); document.getElementById('authOverlay').classList.add('show'); showToast('ออกจากระบบแล้ว บ๊ายบาย 👋'); }
+
+/* ================= LANG SYSTEM ================= */
+function toggleLanguage() { currentLang = currentLang === 'th' ? 'en' : 'th'; localStorage.setItem(LANG_KEY, currentLang); showToast('toastLang'); applyLangUI(); renderAllViews(); }
+function applyLangUI() {
+  const l = LANG[currentLang]; document.getElementById('langToggleBtn').innerHTML = currentLang === 'th' ? '🇹🇭 TH' : '🇬🇧 EN';
+  document.querySelector('.brand p').innerHTML = l.appDesc; document.getElementById('tabCalendarBtn').innerHTML = l.tabCal; document.getElementById('tabKanbanBtn').innerHTML = l.tabBoard; document.getElementById('tabListBtn').innerHTML = l.tabList; document.getElementById('btnLogout').innerHTML = l.btnLogout; document.querySelector('.cal-today-btn').innerHTML = l.calToday;
+  const weekCells = document.querySelectorAll('.weekdays div'); if(weekCells.length > 0) l.days.forEach((day, i) => weekCells[i].innerHTML = day);
+  document.querySelector('#col-todo').previousElementSibling.innerHTML = `${l.boardTodo} <span id="count-todo">0</span>`; document.querySelector('#col-in_progress').previousElementSibling.innerHTML = `${l.boardInProg} <span id="count-in_progress">0</span>`; document.querySelector('#col-done').previousElementSibling.innerHTML = `${l.boardDone} <span id="count-done">0</span>`; document.getElementById('dayModalAddBtn').innerHTML = l.modalAddDay;
+  document.getElementById('subjModalTitle').innerText = l.subjModalTitle; document.getElementById('subjModalAddTitle').innerText = l.subjModalAddTitle; document.getElementById('lblSubjCode').innerText = l.lblSubjCode; document.getElementById('lblSubjName').innerText = l.lblSubjName; document.getElementById('lblSubjTeacher').innerText = l.lblSubjTeacher; document.getElementById('btnSaveSubj').innerText = l.btnSaveSubj; document.getElementById('s_code').placeholder = l.phSubjCode; document.getElementById('s_name').placeholder = l.phSubjName; document.getElementById('s_teacher').placeholder = l.phSubjTeacher;
+  const titleNode = document.getElementById('taskModalTitle'); titleNode.innerText = (titleNode.innerText === LANG.th.modalEditTitle || titleNode.innerText === LANG.en.modalEditTitle) ? l.modalEditTitle : l.modalAddTitle;
+  document.getElementById('lblTaskType').innerText = l.lblTaskType; document.getElementById('lblTaskName').innerText = l.lblTaskName; document.getElementById('lblTaskDate').innerText = l.lblTaskDate; document.getElementById('lblTaskTime').innerText = l.lblTaskTime; document.getElementById('lblTaskSubj').innerText = l.lblTaskSubj; document.getElementById('btnManageSubj').innerText = l.btnManageSubj; document.getElementById('lblTaskSubmit').innerText = l.lblTaskSubmit; document.getElementById('lblTaskWorkType').innerText = l.lblTaskWorkType; document.getElementById('lblTaskTeammates').innerText = l.lblTaskTeammates; document.getElementById('lblTaskResp').innerText = l.lblTaskResp; document.getElementById('lblTaskLoc').innerText = l.lblTaskLoc; document.getElementById('lblTaskLink').innerText = l.lblTaskLink; document.getElementById('lblTaskNotes').innerText = l.lblTaskNotes; document.getElementById('btnDel').innerText = l.btnDel; document.getElementById('btnSaveTask').innerText = l.btnSaveTask;
+  document.getElementById('f_title').placeholder = l.phTaskName; document.getElementById('f_teammates').placeholder = l.phTeammates; document.getElementById('f_responsible').placeholder = l.phResp; document.getElementById('f_location').placeholder = l.phLoc; document.getElementById('f_notes').placeholder = l.phNotes;
+  document.getElementById('optSubmitOnline').innerText = translateSys('ส่งออนไลน์ (e-learning/Classroom)'); document.getElementById('optSubmitPaper').innerText = translateSys('ส่งเอกสาร/กระดาษ'); document.getElementById('optSubmitEmail').innerText = translateSys('ส่งทางอีเมล'); document.getElementById('optSubmitOther').innerText = translateSys('อื่นๆ'); document.getElementById('radSingle').innerText = translateSys('เดี่ยว'); document.getElementById('radPair').innerText = translateSys('คู่'); document.getElementById('radGroup').innerText = translateSys('กลุ่ม');
+  if(currentAuthMode === 'login') { document.getElementById('authTitle').innerText = l.authTitle; document.getElementById('authSubtitle').innerText = l.authSub; document.getElementById('authMainBtn').innerText = l.authBtn; document.getElementById('authSwitchMode').innerText = l.authModeReg; document.getElementById('authForgotBtn').innerText = l.authModeForgot; } 
+  else if(currentAuthMode === 'register') { document.getElementById('authTitle').innerText = (currentLang==='th')?'ลงทะเบียน':'Register'; document.getElementById('authSubtitle').innerText = (currentLang==='th')?'ตั้งรหัสผ่านสำหรับเข้าใช้งานครั้งต่อไป':'Set a password for next login'; document.getElementById('authMainBtn').innerText = (currentLang==='th')?'สมัครใช้งาน':'Register'; document.getElementById('authSwitchMode').innerText = l.authModeLogin; } 
+  else { document.getElementById('authTitle').innerText = (currentLang==='th')?'รีเซ็ตรหัสผ่าน':'Reset Password'; document.getElementById('authSubtitle').innerText = (currentLang==='th')?'ใส่รหัสนักศึกษาเพื่อตั้งรหัสผ่านใหม่':'Enter ID to set new password'; document.getElementById('authMainBtn').innerText = (currentLang==='th')?'เปลี่ยนรหัสผ่าน':'Reset'; document.getElementById('authSwitchMode').innerText = l.authModeBack; }
+  document.getElementById('lblAuthId').innerText = l.authId; document.getElementById('auth_id').placeholder = l.authId; document.getElementById('lblAuthPass').innerText = l.authPass; document.getElementById('auth_pass').placeholder = l.authPass; document.getElementById('lblAuthPass2').innerText = l.authPass2; document.getElementById('auth_pass2').placeholder = l.authPass2;
+  if(currentUser) { buildFilterChips(); buildCategoryPicker(); refreshSubjectDropdown(); renderSubjectList(); }
+}
+
+/* ================= INIT ================= */
+function initApp(){ loadData(); buildFilterChips(); buildCategoryPicker(); const now = new Date(); calYear = now.getFullYear(); calMonth = now.getMonth(); document.querySelectorAll('#workTypeGroup .radio-pill').forEach(el=>{ el.addEventListener('click', ()=>{ selectedWorkType = el.dataset.v; document.querySelectorAll('#workTypeGroup .radio-pill').forEach(p=>p.classList.remove('sel')); el.classList.add('sel'); document.getElementById('teammatesField').style.display = (selectedWorkType==='เดี่ยว') ? 'none' : 'block'; }); }); refreshSubjectDropdown(); renderAllViews(); }
+function renderAllViews(){ renderCalendar(); renderKanban(); renderList(); }
+function switchView(v){ currentView = v; ['calendar', 'kanban', 'list'].forEach(view => { const btn = document.getElementById(view === 'calendar' ? 'tabCalendarBtn' : (view === 'kanban' ? 'tabKanbanBtn' : 'tabListBtn')); if(btn) btn.classList.toggle('active', v === view); document.getElementById('view-'+view).classList.toggle('active', v === view); }); renderAllViews(); }
+
+/* ================= UI BUILDERS ================= */
+function buildFilterChips(){ const wrap = document.getElementById('filterChips'); wrap.innerHTML = ''; CAT_KEYS.forEach(key=>{ const cat = CATEGORIES[key]; const chip = document.createElement('div'); chip.className = 'chip ' + (activeFilters.has(key) ? 'active' : ''); chip.style.background = activeFilters.has(key) ? cat.color : 'var(--paper)'; chip.style.borderColor = activeFilters.has(key) ? 'transparent' : cat.color; chip.style.color = activeFilters.has(key) ? '#fff' : 'var(--ink-soft)'; chip.innerHTML = `<span class="dot" style="background:#fff"></span>${cat.icon} ${cat[currentLang]}`; chip.onclick = ()=>{ if(activeFilters.has(key)){ activeFilters.delete(key); } else { activeFilters.add(key); } applyLangUI(); renderAllViews(); }; wrap.appendChild(chip); }); }
+function buildCategoryPicker(){ const wrap = document.getElementById('catPicker'); wrap.innerHTML = ''; CAT_KEYS.forEach(key=>{ const cat = CATEGORIES[key]; const opt = document.createElement('div'); opt.className = 'cat-opt'; opt.dataset.key = key; opt.innerHTML = `<span class="ic">${cat.icon}</span><span>${cat[currentLang]}</span>`; opt.onclick = ()=> selectCategory(key); wrap.appendChild(opt); }); selectCategory(selectedCategory); }
+function selectCategory(key){ selectedCategory = key; document.querySelectorAll('.cat-opt').forEach(el=>{ const cat = CATEGORIES[el.dataset.key]; if(el.dataset.key === key){ el.classList.add('sel'); el.style.background = cat.color; el.style.borderColor = cat.color; }else{ el.classList.remove('sel'); el.style.background = 'var(--paper)'; el.style.borderColor = 'var(--line)'; } }); document.getElementById('grp_assignment').style.display = key==='assignment' ? 'block' : 'none'; document.getElementById('grp_org').style.display = ['department','faculty','club'].includes(key) ? 'block' : 'none'; }
+function refreshSubjectDropdown(){ const sel = document.getElementById('f_subject_select'); const l = LANG[currentLang]; sel.innerHTML = `<option value="">${l.optSelectSubj}</option>`; subjects.forEach(s => { sel.innerHTML += `<option value="${s.id}">[${escapeHtml(s.code)}] ${escapeHtml(s.name)}</option>`; }); }
+function openSubjectModal(){ renderSubjectList(); document.getElementById('subjectOverlay').classList.add('show'); }
+function renderSubjectList(){ const list = document.getElementById('subjectList'); const l = LANG[currentLang]; if(subjects.length === 0){ list.innerHTML = `<p style="font-size:13px; color:var(--ink-soft); text-align:center;">${l.emptySubj}</p>`; return; } list.innerHTML = subjects.map(s => `<div class="subj-item"><div class="subj-info"><span class="subj-code">${escapeHtml(s.code)}</span><span>${escapeHtml(s.name)}</span><div style="font-size:11.5px; color:var(--ink-soft); margin-top:2px;">${l.cardTeacher} ${escapeHtml(s.teacher)}</div></div><button class="subj-del" onclick="deleteSubject('${s.id}')">✕</button></div>`).join(''); }
+function addSubject(){ const code = document.getElementById('s_code').value.trim(); const name = document.getElementById('s_name').value.trim(); const teacher = document.getElementById('s_teacher').value.trim(); if(!name){ return showToast('ระบุชื่อวิชาก่อนนะ'); } subjects.push({ id: uid(), code, name, teacher }); saveSubjects(); refreshSubjectDropdown(); renderSubjectList(); document.getElementById('s_code').value = ''; document.getElementById('s_name').value = ''; document.getElementById('s_teacher').value = ''; showToast('เพิ่มวิชาเรียบร้อย!'); }
+function deleteSubject(id){ if(confirm((currentLang==='th')?'ลบวิชานี้ไหม?':'Delete this subject?')){ subjects = subjects.filter(s => s.id !== id); saveSubjects(); refreshSubjectDropdown(); renderSubjectList(); } }
+
+/* ================= VIEWS ================= */
+function changeMonth(delta){ calMonth += delta; if(calMonth<0){calMonth=11;calYear--;} if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
+function goToday(){ const now = new Date(); calYear = now.getFullYear(); calMonth = now.getMonth(); renderCalendar(); }
+function tasksForDate(dateStr){ return tasks.filter(t=> t.dueDate === dateStr && activeFilters.has(t.category)).sort((a,b)=> (a.dueTime||'99:99').localeCompare(b.dueTime||'99:99')); }
+function renderCalendar(){ const l = LANG[currentLang]; document.getElementById('calTitle').textContent = `${l.months[calMonth]} ${calYear + l.yearOffset}`; const grid = document.getElementById('calGrid'); grid.innerHTML = ''; const firstDay = new Date(calYear, calMonth, 1).getDay(); const daysInMonth = new Date(calYear, calMonth+1, 0).getDate(); const today = todayStr(); for(let i=0;i<firstDay;i++){ const empty = document.createElement('div'); empty.className = 'day-cell empty'; grid.appendChild(empty); } for(let d=1; d<=daysInMonth; d++){ const monthDayKey = `${pad(calMonth+1)}-${pad(d)}`; const dateStr = `${calYear}-${monthDayKey}`; const cell = document.createElement('div'); cell.className = 'day-cell' + (dateStr===today ? ' today' : ''); let html = `<div class="num">${d}</div>`; if(currentLang === 'th' && THAI_HOLIDAYS[monthDayKey]){ html += `<div class="holiday-label">${THAI_HOLIDAYS[monthDayKey]}</div>`; } const dayTasks = tasksForDate(dateStr); dayTasks.slice(0,3).forEach(t => { const cat = CATEGORIES[t.category]; html += `<div class="cal-task-pill" style="background:${cat.color}">${escapeHtml(t.title)}</div>`; }); if(dayTasks.length > 3) html += `<div class="day-more">+${dayTasks.length-3}</div>`; cell.innerHTML = html; cell.onclick = ()=> openDayModal(dateStr); grid.appendChild(cell); } }
+function openDayModal(dateStr){ const l = LANG[currentLang]; dayModalDate = dateStr; const d = parseDate(dateStr); const label = `${d.getDate()} ${l.months[d.getMonth()]} ${d.getFullYear() + l.yearOffset}`; document.getElementById('dayModalTitle').textContent = label; const list = tasksForDate(dateStr); const container = document.getElementById('dayModalList'); if(list.length===0){ container.innerHTML = `<div class="empty-state" style="padding:24px 0;">${l.emptyDay}</div>`; } else{ container.innerHTML = list.map(t=>renderTaskCard(t, false, false)).join(''); } document.getElementById('dayModalAddBtn').onclick = ()=>{ closeOverlay('dayOverlay'); openTaskModal(null, dateStr); }; document.getElementById('dayOverlay').classList.add('show'); }
+
+function renderKanban(){ const visible = tasks.filter(t=>activeFilters.has(t.category)); const cols = { todo: [], in_progress: [], done: [] }; visible.forEach(t => { if(!t.status) t.status = 'todo'; if(cols[t.status]) cols[t.status].push(t); else cols['todo'].push(t); }); Object.keys(cols).forEach(status => { document.getElementById(`count-${status}`).textContent = cols[status].length; document.getElementById(`col-${status}`).innerHTML = cols[status].map(t => renderTaskCard(t, false, true)).join(''); }); }
+function handleDragStart(e, id){ draggedTaskId = id; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', id); setTimeout(() => e.target.classList.add('dragging'), 0); }
+function handleDragEnd(e){ e.target.classList.remove('dragging'); draggedTaskId = null; document.querySelectorAll('.kanban-col').forEach(c => c.classList.remove('drag-over')); }
+function handleDragOver(e){ e.preventDefault(); e.dataTransfer.dropEffect = 'move'; e.currentTarget.classList.add('drag-over'); }
+function handleDragLeave(e){ e.currentTarget.classList.remove('drag-over'); }
+function handleDrop(e, status){ e.preventDefault(); e.currentTarget.classList.remove('drag-over'); const id = e.dataTransfer.getData('text/plain') || draggedTaskId; if(id){ const task = tasks.find(t => t.id === id); if(task && task.status !== status){ task.status = status; persistTasks(); renderAllViews(); } } }
+
+function renderList(){ const l = LANG[currentLang]; const container = document.getElementById('listContainer'); const visible = tasks.filter(t=>activeFilters.has(t.category)); if(visible.length===0){ container.innerHTML = `<div class="empty-state">${l.emptyList}</div>`; return; } const sorted = [...visible].sort((a,b)=>{ const cmp = a.dueDate.localeCompare(b.dueDate); return cmp!==0 ? cmp : (a.dueTime||'99:99').localeCompare(b.dueTime||'99:99'); }); const groups = {}; sorted.forEach(t=>{ if(!groups[t.dueDate]) groups[t.dueDate] = []; groups[t.dueDate].push(t); }); let html = ''; Object.keys(groups).forEach(dateStr=>{ const d = parseDate(dateStr); const label = `${d.getDate()} ${l.months[d.getMonth()]} ${d.getFullYear() + l.yearOffset}`; const diff = daysBetween(dateStr); let badgeClass, badgeText; if(diff < 0){ badgeClass='overdue'; badgeText=`${l.overdue} ${Math.abs(diff)} ${l.daysUnit}`; } else if(diff === 0){ badgeClass='today'; badgeText=l.todayLabel; } else if(diff === 1){ badgeClass='soon'; badgeText=l.tmrLabel; } else if(diff <= 3){ badgeClass='soon'; badgeText=`${l.inDays} ${diff} ${l.daysUnit}`; } else{ badgeClass='normal'; badgeText=`${l.inDays} ${diff} ${l.daysUnit}`; } html += `<div class="date-group"><div class="date-group-head"><span class="d">${label}</span><span class="badge ${badgeClass}">${badgeText}</span></div>${groups[dateStr].map(t=>renderTaskCard(t, true, false)).join('')}</div>`; }); container.innerHTML = html; }
+
+function renderTaskCard(t, withShift, isDraggable){
+  const cat = CATEGORIES[t.category]; const l = LANG[currentLang]; let metaLines = [];
+  if(t.category==='assignment'){ if(t.subject) metaLines.push(`<b>${l.cardSubj}</b> ${escapeHtml(t.subject)}`); if(t.teacher) metaLines.push(`<b>${l.cardTeacher}</b> ${escapeHtml(t.teacher)}`); if(t.submitMethod) metaLines.push(`<b>${l.cardSubmit}</b> ${escapeHtml(translateSys(t.submitMethod))}`); if(t.workType) metaLines.push(`<b>${l.cardType}</b> ${escapeHtml(translateSys(t.workType))}${t.teammates ? ' — '+escapeHtml(t.teammates) : ''}`); }
+  else if(['department','faculty','club'].includes(t.category)){ if(t.responsible) metaLines.push(`<b>${l.cardResp}</b> ${escapeHtml(t.responsible)}`); if(t.location) metaLines.push(`<b>${l.cardLoc}</b> ${escapeHtml(t.location)}`); }
+  if(isDraggable){ const d = parseDate(t.dueDate); metaLines.unshift(`<b>${l.cardDue}</b> ${d.getDate()} ${l.months[d.getMonth()].substring(0,3)} ${t.dueTime ? t.dueTime+' น.' : ''}`); } else { if(t.dueTime) metaLines.push(`<b>${l.cardTime}</b> ${escapeHtml(t.dueTime)}`); }
+  if(t.notes) metaLines.push(escapeHtml(t.notes));
+  const linkHtml = t.link ? `<a class="task-link" href="${escapeHtml(t.link)}" target="_blank" rel="noopener">${l.openLink}</a>` : '';
+  const shiftHtml = withShift ? `<div class="task-shift" style="display:flex; gap:4px; margin-top:8px; padding-left:6px;"><button style="font-size:11px; border:1px solid var(--line); background:var(--paper-dim); border-radius:8px; padding:4px 8px; color:var(--ink-soft); font-weight:500; cursor:pointer;" onclick="shiftTask('${t.id}',-1)">${l.shiftEarly}</button><button style="font-size:11px; border:1px solid var(--line); background:var(--paper-dim); border-radius:8px; padding:4px 8px; color:var(--ink-soft); font-weight:500; cursor:pointer;" onclick="shiftTask('${t.id}',1)">${l.shiftLate}</button></div>` : '';
+  const dragAttrs = isDraggable ? `draggable="true" ondragstart="handleDragStart(event, '${t.id}')" ondragend="handleDragEnd(event)"` : '';
+  return `<div class="task-card ${t.category}" ${dragAttrs}><div class="task-top"><div style="min-width:0; width:100%;"><div class="task-title">${escapeHtml(t.title)}<span class="task-tag ${t.category}">${cat.icon} ${cat[currentLang]}</span></div>${metaLines.length ? `<div class="task-meta">${metaLines.join('<br>')}</div>` : ''}${linkHtml}</div><div class="task-actions"><button class="icon-btn" onclick="openTaskModal('${t.id}')" title="Edit">✏️</button></div></div>${shiftHtml}</div>`;
+}
+
+function shiftTask(id, delta){ const t = tasks.find(x=>x.id===id); if(!t) return; const d = parseDate(t.dueDate); d.setDate(d.getDate()+delta); t.dueDate = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; persistTasks(); renderAllViews(); showToast('ย้ายวันเรียบร้อย 👍'); }
+function quickDelete(id){ if(confirm((currentLang==='th')?'ลบงานนี้เลยไหม?':'Delete this task?')){ tasks = tasks.filter(t=>t.id!==id); persistTasks(); renderAllViews(); showToast('ลบงานแล้ว'); } }
+
+/* ================= MODALS ================= */
+function openTaskModal(taskId, prefillDate){
+  editingTaskId = taskId; const isEdit = !!taskId; const l = LANG[currentLang];
+  document.getElementById('taskModalTitle').textContent = isEdit ? l.modalEditTitle : l.modalAddTitle; document.getElementById('btnDel').style.display = isEdit ? 'block' : 'none';
+  if(isEdit){
+    const t = tasks.find(x=>x.id===taskId); selectCategory(t.category); document.getElementById('f_title').value = t.title || ''; document.getElementById('f_date').value = t.dueDate || ''; document.getElementById('f_time').value = t.dueTime || '';
+    let matchedSubject = subjects.find(s => t.subject && t.subject.includes(s.code)); document.getElementById('f_subject_select').value = matchedSubject ? matchedSubject.id : '';
+    document.getElementById('f_submit').value = t.submitMethod || 'ส่งออนไลน์ (e-learning/Classroom)'; selectedWorkType = t.workType || 'เดี่ยว'; document.querySelectorAll('#workTypeGroup .radio-pill').forEach(p=> p.classList.toggle('sel', p.dataset.v===selectedWorkType));
+    document.getElementById('teammatesField').style.display = (selectedWorkType==='เดี่ยว') ? 'none' : 'block'; document.getElementById('f_teammates').value = t.teammates || ''; document.getElementById('f_responsible').value = t.responsible || ''; document.getElementById('f_location').value = t.location || ''; document.getElementById('f_link').value = t.link || ''; document.getElementById('f_notes').value = t.notes || '';
+  }else{
+    selectCategory('assignment'); document.getElementById('f_title').value = ''; document.getElementById('f_date').value = prefillDate || todayStr(); document.getElementById('f_time').value = ''; document.getElementById('f_subject_select').value = ''; document.getElementById('f_submit').value = 'ส่งออนไลน์ (e-learning/Classroom)'; selectedWorkType = 'เดี่ยว';
+    document.querySelectorAll('#workTypeGroup .radio-pill').forEach(p=>p.classList.toggle('sel', p.dataset.v==='เดี่ยว')); document.getElementById('teammatesField').style.display = 'none'; document.getElementById('f_teammates').value = ''; document.getElementById('f_responsible').value = ''; document.getElementById('f_location').value = ''; document.getElementById('f_link').value = ''; document.getElementById('f_notes').value = '';
+  } document.getElementById('taskOverlay').classList.add('show');
+}
+function closeOverlay(id){ document.getElementById(id).classList.remove('show'); }
+function saveTask(){
+  const title = document.getElementById('f_title').value.trim(); const dueDate = document.getElementById('f_date').value;
+  if(!title){ return showToast('ใส่ชื่องานก่อนนะ'); } if(!dueDate){ return showToast('เลือกวันครบกำหนดด้วยนะ'); }
+  const data = { id: editingTaskId || uid(), category: selectedCategory, title, dueDate, dueTime: document.getElementById('f_time').value || '', link: document.getElementById('f_link').value.trim(), notes: document.getElementById('f_notes').value.trim(), status: editingTaskId ? tasks.find(t=>t.id===editingTaskId).status : 'todo' };
+  if(selectedCategory==='assignment'){ const subjId = document.getElementById('f_subject_select').value; const subj = subjects.find(s => s.id === subjId); if(subj){ data.subject = `[${subj.code}] ${subj.name}`; data.teacher = subj.teacher; } else { data.subject = ''; data.teacher = ''; } data.submitMethod = document.getElementById('f_submit').value; data.workType = selectedWorkType; data.teammates = selectedWorkType==='เดี่ยว' ? '' : document.getElementById('f_teammates').value.trim(); }
+  else if(['department','faculty','club'].includes(selectedCategory)){ data.responsible = document.getElementById('f_responsible').value.trim(); data.location = document.getElementById('f_location').value.trim(); }
+  if(editingTaskId){ const idx = tasks.findIndex(t=>t.id===editingTaskId); tasks[idx] = data; }else{ tasks.push(data); } persistTasks(); closeOverlay('taskOverlay'); renderAllViews(); showToast(editingTaskId ? 'แก้ไขงานเรียบร้อย ✏️' : 'เพิ่มงานเรียบร้อย 🎉'); editingTaskId = null;
+}
+function deleteCurrentTask(){ if(editingTaskId) quickDelete(editingTaskId); closeOverlay('taskOverlay'); editingTaskId = null; }
+
+window.onload = () => { applyLangUI(); const activeSession = sessionStorage.getItem('suki-current-user'); if(activeSession) { currentUser = activeSession; document.getElementById('authOverlay').classList.remove('show'); initApp(); } else { document.getElementById('authOverlay').classList.add('show'); } };
+</script>
+</body>
+</html>
