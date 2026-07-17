@@ -199,6 +199,7 @@
 
 <button class="fab" onclick="openTaskModal(null, todayStr())" aria-label="เพิ่มงาน">＋</button>
 
+<!-- Modals -->
 <div class="overlay" id="dayOverlay">
   <div class="modal">
     <button class="modal-close" onclick="closeOverlay('dayOverlay')">✕</button>
@@ -295,28 +296,28 @@
 
 <div class="toast" id="toast"></div>
 
-<script type="module">
-  // Import Firebase app initialization
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  
-  // (Optional) หากจะใช้ Database หรือระบบ Auth ในอนาคต ให้เพิ่ม import เข้ามาตรงนี้นะครับ
-  // เช่น import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyBYehVwg1Ux-WmW10iPsC8PreAbbqvt5QQ",
-    authDomain: "todolist-252b6.firebaseapp.com",
-    projectId: "todolist-252b6",
-    storageBucket: "todolist-252b6.firebasestorage.app",
-    messagingSenderId: "25813460473",
-    appId: "1:25813460473:web:fe30e3f030fc867ca6c928",
-    measurementId: "G-ZRGSGSCK3X"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-</script>
+<!-- ใช้งาน Firebase SDK (Compat Version) -->
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 
 <script>
+/* ================= FIREBASE SETUP ================= */
+// !!! นำข้อมูล Config จาก Firebase Console ของคุณมาใส่ตรงนี้ได้เลย !!!
+const firebaseConfig = {
+  apiKey: "AIzaSyBYehVwg1Ux-WmW10iPsC8PreAbbqvt5QQ",
+  authDomain: "todolist-252b6.firebaseapp.com",
+  projectId: "todolist-252b6",
+  storageBucket: "todolist-252b6.firebasestorage.app",
+  messagingSenderId: "25813460473",
+  appId: "1:25813460473:web:fe30e3f030fc867ca6c928",
+  measurementId: "G-ZRGSGSCK3X"
+};
+
+// เริ่มต้นใช้งาน Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+
 /* ================= DATA & TRANSLATION ================= */
 const CATEGORIES = {
   assignment: { th:'งาน/การบ้าน', en:'Assignments', color:'var(--c-assignment)', icon:'📘'},
@@ -334,7 +335,7 @@ const SYS_TRANS = {
   'ไม่พบรหัสนักศึกษานี้ ลองสมัครก่อนนะ': { th:'ไม่พบรหัสนักศึกษานี้ ลองสมัครก่อนนะ', en:'ID not found' }, 'รหัสผ่านผิดจ้า ลองใหม่นะ': { th:'รหัสผ่านผิดจ้า ลองใหม่นะ', en:'Incorrect password' }, 'ยินดีต้อนรับกลับมา! 🍡': { th:'ยินดีต้อนรับกลับมา! 🍡', en:'Welcome back! 🍡' }, 'ไม่พบรหัสนักศึกษานี้ในระบบ': { th:'ไม่พบรหัสนักศึกษานี้ในระบบ', en:'ID not found in system' }, 'รหัสผ่านใหม่ไม่ตรงกัน!': { th:'รหัสผ่านใหม่ไม่ตรงกัน!', en:'New passwords do not match!' }, 'เปลี่ยนรหัสผ่านเรียบร้อย! ล็อกอินเลย': { th:'เปลี่ยนรหัสผ่านเรียบร้อย! ล็อกอินเลย', en:'Password reset! Login now.' },
   'ออกจากระบบแล้ว บ๊ายบาย 👋': { th:'ออกจากระบบแล้ว บ๊ายบาย 👋', en:'Logged out. Bye! 👋' }, 'toastLang': { th:'เปลี่ยนภาษาเรียบร้อย 🇹🇭', en:'Language switched 🇬🇧' }
 };
-const CAT_KEYS = Object.keys(CATEGORIES); const STORAGE_KEY = 'suki-odaz-tasks-v2'; const SUBJECTS_KEY = 'suki-odaz-subjects-v1'; const AUTH_KEY = 'suki-odaz-auth-v1'; const LANG_KEY = 'suki-odaz-lang';
+const CAT_KEYS = Object.keys(CATEGORIES); const LANG_KEY = 'suki-odaz-lang';
 let tasks = []; let subjects = []; let activeFilters = new Set(CAT_KEYS); let currentView = 'kanban'; let calYear, calMonth; let editingTaskId = null; let selectedCategory = 'assignment'; let selectedWorkType = 'เดี่ยว'; let draggedTaskId = null;
 let currentLang = localStorage.getItem(LANG_KEY) || 'th'; let currentUser = null; let currentAuthMode = 'login';
 const LANG = {
@@ -359,19 +360,88 @@ const LANG = {
 };
 function uid(){ return 't'+Date.now()+Math.random().toString(36).slice(2,7); } function pad(n){ return n<10 ? '0'+n : ''+n; } function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); } function parseDate(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); } function daysBetween(dateStr){ return Math.round((parseDate(dateStr) - parseDate(todayStr())) / 86400000); } function escapeHtml(str){ return (!str)?'':str.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); } function translateSys(val){ return (SYS_TRANS[val]) ? SYS_TRANS[val][currentLang] : val; }
 function showToast(msg){ const t = document.getElementById('toast'); t.textContent = translateSys(msg); t.classList.add('show'); clearTimeout(showToast._timer); showToast._timer = setTimeout(()=>t.classList.remove('show'), 2200); }
-function loadData(){ try{ tasks = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; tasks.forEach(t => { if(!t.status) t.status = 'todo'; }); const storedSubjects = localStorage.getItem(SUBJECTS_KEY); if(storedSubjects) subjects = JSON.parse(storedSubjects); else { subjects = [{id:uid(),code:'ED401',name:'Teaching Practicum',teacher:'อ.นิเทศก์'}]; saveSubjects(); } }catch(e){ tasks = []; } }
-function persistTasks(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); } function saveSubjects(){ localStorage.setItem(SUBJECTS_KEY, JSON.stringify(subjects)); }
 
-/* ================= AUTH SYSTEM ================= */
-function switchAuthMode(mode) { currentAuthMode = mode; document.getElementById('auth_id').value = ''; document.getElementById('auth_pass').value = ''; document.getElementById('auth_pass2').value = ''; applyLangUI(); document.getElementById('auth_pass2_wrap').style.display = (mode==='login') ? 'none' : 'block'; document.getElementById('authForgotBtn').style.display = (mode==='login') ? 'block' : 'none'; }
-function handleAuth() {
-  const s_id = document.getElementById('auth_id').value.trim(); const s_pass = document.getElementById('auth_pass').value.trim(); const s_pass2 = document.getElementById('auth_pass2').value.trim();
-  if(!s_id || !s_pass) return showToast('ใส่ข้อมูลให้ครบก่อนนะ!');
-  let users = JSON.parse(localStorage.getItem(AUTH_KEY) || '{}');
-  if(currentAuthMode === 'register') { if(users[s_id]) return showToast('รหัสนักศึกษานี้ลงทะเบียนไปแล้วจ้า'); if(s_pass !== s_pass2) return showToast('รหัสผ่านไม่ตรงกัน!'); users[s_id] = { password: s_pass }; localStorage.setItem(AUTH_KEY, JSON.stringify(users)); showToast('สมัครสำเร็จ! เข้าสู่ระบบแล้ว 🎉'); loginSuccess(s_id); } 
-  else if(currentAuthMode === 'login') { if(!users[s_id]) return showToast('ไม่พบรหัสนักศึกษานี้ ลองสมัครก่อนนะ'); if(users[s_id].password !== s_pass) return showToast('รหัสผ่านผิดจ้า ลองใหม่นะ'); showToast('ยินดีต้อนรับกลับมา! 🍡'); loginSuccess(s_id); } 
-  else if(currentAuthMode === 'forgot') { if(!users[s_id]) return showToast('ไม่พบรหัสนักศึกษานี้ในระบบ'); if(s_pass !== s_pass2) return showToast('รหัสผ่านใหม่ไม่ตรงกัน!'); users[s_id].password = s_pass; localStorage.setItem(AUTH_KEY, JSON.stringify(users)); showToast('เปลี่ยนรหัสผ่านเรียบร้อย! ล็อกอินเลย'); switchAuthMode('login'); }
+/* ================= FIREBASE CLOUD SYNC ================= */
+function loadData(){ 
+  if(!currentUser) return;
+
+  // ดึงข้อมูลวิชาเรียนแบบ Real-time
+  db.ref('users/' + currentUser + '/subjects').on('value', (snapshot) => {
+    const data = snapshot.val();
+    if(data) {
+      subjects = data;
+    } else {
+      subjects = [{id:uid(), code:'ED401', name:'Teaching Practicum', teacher:'อ.นิเทศก์'}];
+      saveSubjects();
+    }
+    refreshSubjectDropdown();
+    renderSubjectList();
+  });
+
+  // ดึงข้อมูลงานแบบ Real-time
+  db.ref('users/' + currentUser + '/tasks').on('value', (snapshot) => {
+    const data = snapshot.val();
+    tasks = data ? data : [];
+    tasks.forEach(t => { if(!t.status) t.status = 'todo'; });
+    
+    // รีเฟรชหน้าจออัตโนมัติเมื่อเพื่อนหรือเครื่องอื่นมีการขยับงาน
+    renderAllViews(); 
+  });
 }
+
+function persistTasks(){ 
+  if(currentUser) {
+    db.ref('users/' + currentUser + '/tasks').set(tasks);
+  }
+} 
+function saveSubjects(){ 
+  if(currentUser) {
+    db.ref('users/' + currentUser + '/subjects').set(subjects);
+  }
+}
+
+/* ================= AUTH SYSTEM (Updated for Firebase) ================= */
+function switchAuthMode(mode) { currentAuthMode = mode; document.getElementById('auth_id').value = ''; document.getElementById('auth_pass').value = ''; document.getElementById('auth_pass2').value = ''; applyLangUI(); document.getElementById('auth_pass2_wrap').style.display = (mode==='login') ? 'none' : 'block'; document.getElementById('authForgotBtn').style.display = (mode==='login') ? 'block' : 'none'; }
+
+function handleAuth() {
+  const s_id = document.getElementById('auth_id').value.trim(); 
+  const s_pass = document.getElementById('auth_pass').value.trim(); 
+  const s_pass2 = document.getElementById('auth_pass2').value.trim();
+  if(!s_id || !s_pass) return showToast('ใส่ข้อมูลให้ครบก่อนนะ!');
+
+  const userRef = db.ref('users/' + s_id + '/auth');
+
+  if(currentAuthMode === 'register') { 
+    userRef.once('value').then(snapshot => {
+      if(snapshot.exists()) return showToast('รหัสนักศึกษานี้ลงทะเบียนไปแล้วจ้า');
+      if(s_pass !== s_pass2) return showToast('รหัสผ่านไม่ตรงกัน!');
+      userRef.set({ password: s_pass }).then(() => {
+        showToast('สมัครสำเร็จ! เข้าสู่ระบบแล้ว 🎉');
+        loginSuccess(s_id);
+      });
+    });
+  } 
+  else if(currentAuthMode === 'login') { 
+    userRef.once('value').then(snapshot => {
+      if(!snapshot.exists()) return showToast('ไม่พบรหัสนักศึกษานี้ ลองสมัครก่อนนะ');
+      const data = snapshot.val();
+      if(data.password !== s_pass) return showToast('รหัสผ่านผิดจ้า ลองใหม่นะ');
+      showToast('ยินดีต้อนรับกลับมา! 🍡');
+      loginSuccess(s_id);
+    });
+  } 
+  else if(currentAuthMode === 'forgot') { 
+    userRef.once('value').then(snapshot => {
+      if(!snapshot.exists()) return showToast('ไม่พบรหัสนักศึกษานี้ในระบบ');
+      if(s_pass !== s_pass2) return showToast('รหัสผ่านใหม่ไม่ตรงกัน!');
+      userRef.update({ password: s_pass }).then(() => {
+        showToast('เปลี่ยนรหัสผ่านเรียบร้อย! ล็อกอินเลย');
+        switchAuthMode('login');
+      });
+    });
+  }
+}
+
 function loginSuccess(s_id) { currentUser = s_id; sessionStorage.setItem('suki-current-user', s_id); document.getElementById('authOverlay').classList.remove('show'); initApp(); }
 function logout() { currentUser = null; sessionStorage.removeItem('suki-current-user'); document.getElementById('auth_id').value = ''; document.getElementById('auth_pass').value = ''; switchAuthMode('login'); document.getElementById('authOverlay').classList.add('show'); showToast('ออกจากระบบแล้ว บ๊ายบาย 👋'); }
 
