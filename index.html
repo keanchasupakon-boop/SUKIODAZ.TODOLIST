@@ -286,6 +286,7 @@
     <div class="field" style="text-align:left;"><label id="lblAuthId">รหัสนักศึกษา</label><input type="text" id="auth_id" placeholder="รหัสนักศึกษาของคุณ"></div>
     <div class="field" style="text-align:left;"><label id="lblAuthPass">รหัสผ่าน</label><input type="password" id="auth_pass" placeholder="รหัสผ่าน"></div>
     <div class="field" id="auth_pass2_wrap" style="text-align:left; display:none;"><label id="lblAuthPass2">ยืนยันรหัสผ่านอีกครั้ง</label><input type="password" id="auth_pass2" placeholder="ยืนยันรหัสผ่าน"></div>
+    <div id="authAlert" style="display:none; padding:10px; border-radius:8px; font-size:12.5px; margin-bottom:14px; text-align:left; font-weight:500;"></div>
     <button class="btn btn-primary" id="authMainBtn" style="width:100%; margin-top:10px;" onclick="handleAuth()">ล็อกอินเลย</button>
     <div style="margin-top:16px; font-size:13px; display:flex; justify-content:space-between; color:var(--ink-soft);">
       <span style="cursor:pointer; text-decoration:underline;" id="authSwitchMode" onclick="switchAuthMode('register')">เพิ่งมาครั้งแรก? สมัครเลย</span>
@@ -299,11 +300,12 @@
 <!-- ใช้งาน Firebase SDK (Compat Version) -->
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
-
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
 <script>
 /* ================= FIREBASE SETUP ================= */
 // !!! นำข้อมูล Config จาก Firebase Console ของคุณมาใส่ตรงนี้ได้เลย !!!
 const firebaseConfig = {
+  // ใส่ Config เดิมของคุณตรงนี้
   apiKey: "AIzaSyBYehVwg1Ux-WmW10iPsC8PreAbbqvt5QQ",
   authDomain: "todolist-252b6.firebaseapp.com",
   projectId: "todolist-252b6",
@@ -313,10 +315,9 @@ const firebaseConfig = {
   measurementId: "G-ZRGSGSCK3X"
 };
 
-// เริ่มต้นใช้งาน Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-
+const auth = firebase.auth(); // ประกาศใช้งาน Auth Module
 
 /* ================= DATA & TRANSLATION ================= */
 const CATEGORIES = {
@@ -400,51 +401,112 @@ function saveSubjects(){
   }
 }
 
-/* ================= AUTH SYSTEM (Updated for Firebase) ================= */
-function switchAuthMode(mode) { currentAuthMode = mode; document.getElementById('auth_id').value = ''; document.getElementById('auth_pass').value = ''; document.getElementById('auth_pass2').value = ''; applyLangUI(); document.getElementById('auth_pass2_wrap').style.display = (mode==='login') ? 'none' : 'block'; document.getElementById('authForgotBtn').style.display = (mode==='login') ? 'block' : 'none'; }
+/* ================= AUTH SYSTEM (ระบบใหม่ใช้ Firebase Auth จริงๆ) ================= */
+function showAuthAlert(msg, type = "error") {
+  const alertEl = document.getElementById('authAlert');
+  alertEl.style.display = 'block';
+  if (type === "error") {
+    alertEl.style.backgroundColor = 'var(--red-bg)';
+    alertEl.style.color = 'var(--red)';
+  } else {
+    alertEl.style.backgroundColor = 'var(--green-bg)';
+    alertEl.style.color = 'var(--green)';
+  }
+  alertEl.textContent = msg;
+}
+
+function switchAuthMode(mode) { 
+  currentAuthMode = mode; 
+  document.getElementById('auth_id').value = ''; 
+  document.getElementById('auth_pass').value = ''; 
+  document.getElementById('auth_pass2').value = ''; 
+  document.getElementById('authAlert').style.display = 'none'; 
+  applyLangUI(); 
+  document.getElementById('auth_pass2_wrap').style.display = (mode==='login') ? 'none' : 'block'; 
+  document.getElementById('authForgotBtn').style.display = (mode==='login') ? 'block' : 'none'; 
+}
 
 function handleAuth() {
   const s_id = document.getElementById('auth_id').value.trim(); 
   const s_pass = document.getElementById('auth_pass').value.trim(); 
   const s_pass2 = document.getElementById('auth_pass2').value.trim();
-  if(!s_id || !s_pass) return showToast('ใส่ข้อมูลให้ครบก่อนนะ!');
+  
+  if(!s_id || !s_pass) return showAuthAlert('ใส่ข้อมูลให้ครบก่อนน้าา', 'error');
 
-  const userRef = db.ref('users/' + s_id + '/auth');
+  // จำลองรหัสนักศึกษาให้กลายเป็น Email เพื่อให้ Firebase Auth ยอมรับ
+  const dummyEmail = `${s_id}@sukiodaz.app`;
 
   if(currentAuthMode === 'register') { 
-    userRef.once('value').then(snapshot => {
-      if(snapshot.exists()) return showToast('รหัสนักศึกษานี้ลงทะเบียนไปแล้วจ้า');
-      if(s_pass !== s_pass2) return showToast('รหัสผ่านไม่ตรงกัน!');
-      userRef.set({ password: s_pass }).then(() => {
-        showToast('สมัครสำเร็จ! เข้าสู่ระบบแล้ว 🎉');
-        loginSuccess(s_id);
+    if(s_pass !== s_pass2) return showAuthAlert('รหัสผ่าน 2 ช่องไม่ตรงกัน ลองพิมพ์ใหม่น้า', 'error');
+    if(s_pass.length < 6) return showAuthAlert('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษรจ้า', 'error');
+    
+    // สร้าง User ใน Firebase Auth แบบถูกต้อง
+    auth.createUserWithEmailAndPassword(dummyEmail, s_pass)
+      .then((userCredential) => {
+        showAuthAlert('สมัครสำเร็จ! กำลังพาล็อกอิน 🎉', 'success');
+        // ใช้ UID (รหัสสุ่มความปลอดภัยสูง) เป็น Key แทนรหัสนักศึกษา
+        setTimeout(() => loginSuccess(userCredential.user.uid), 1200); 
+      })
+      .catch(err => {
+        if(err.code === 'auth/email-already-in-use') {
+           showAuthAlert('รหัสนักศึกษานี้ลงทะเบียนไปแล้วจ้า ล็อกอินได้เลย', 'error');
+        } else {
+           showAuthAlert('เกิดข้อผิดพลาด: ' + err.message, 'error');
+        }
       });
-    });
   } 
   else if(currentAuthMode === 'login') { 
-    userRef.once('value').then(snapshot => {
-      if(!snapshot.exists()) return showToast('ไม่พบรหัสนักศึกษานี้ ลองสมัครก่อนนะ');
-      const data = snapshot.val();
-      if(data.password !== s_pass) return showToast('รหัสผ่านผิดจ้า ลองใหม่นะ');
-      showToast('ยินดีต้อนรับกลับมา! 🍡');
-      loginSuccess(s_id);
-    });
+    auth.signInWithEmailAndPassword(dummyEmail, s_pass)
+      .then((userCredential) => {
+        showToast('ยินดีต้อนรับกลับมา! 🍡'); 
+        loginSuccess(userCredential.user.uid);
+      })
+      .catch(err => {
+        showAuthAlert('รหัสนักศึกษา หรือ รหัสผ่านไม่ถูกต้อง ลองใหม่น้า', 'error');
+      });
   } 
   else if(currentAuthMode === 'forgot') { 
-    userRef.once('value').then(snapshot => {
-      if(!snapshot.exists()) return showToast('ไม่พบรหัสนักศึกษานี้ในระบบ');
-      if(s_pass !== s_pass2) return showToast('รหัสผ่านใหม่ไม่ตรงกัน!');
-      userRef.update({ password: s_pass }).then(() => {
-        showToast('เปลี่ยนรหัสผ่านเรียบร้อย! ล็อกอินเลย');
-        switchAuthMode('login');
-      });
-    });
+     // สำหรับระบบ Email ปลอม การ Reset Password ทางอีเมลจะทำไม่ได้จริง 
+     // แนะนำให้ตัดปุ่มลืมรหัสผ่านออก หรือถ้าจะทำต้องทำระบบยืนยันตัวตนแยก (ซึ่งซับซ้อนไปสำหรับโปรเจกต์ชิลๆ)
+     showAuthAlert('เนื่องจากระบบใช้รหัสนักศึกษา หากลืมรหัสผ่านโปรดติดต่อ Admin จ้า', 'error');
   }
 }
 
-function loginSuccess(s_id) { currentUser = s_id; sessionStorage.setItem('suki-current-user', s_id); document.getElementById('authOverlay').classList.remove('show'); initApp(); }
-function logout() { currentUser = null; sessionStorage.removeItem('suki-current-user'); document.getElementById('auth_id').value = ''; document.getElementById('auth_pass').value = ''; switchAuthMode('login'); document.getElementById('authOverlay').classList.add('show'); showToast('ออกจากระบบแล้ว บ๊ายบาย 👋'); }
+function loginSuccess(uid) { 
+  currentUser = uid; 
+  // ไม่ต้องใช้ sessionStorage แล้ว เพราะ Firebase Auth จะจำ State ไว้ให้เอง
+  document.getElementById('authOverlay').classList.remove('show'); 
+  initApp(); 
+}
 
+function logout() { 
+  auth.signOut().then(() => {
+    currentUser = null; 
+    document.getElementById('auth_id').value = ''; 
+    document.getElementById('auth_pass').value = ''; 
+    switchAuthMode('login'); 
+    document.getElementById('authOverlay').classList.add('show'); 
+    showToast('ออกจากระบบแล้ว บ๊ายบาย 👋');
+  });
+}
+
+// อัปเดต onload ให้เช็กสถานะการล็อกอินอัตโนมัติจาก Firebase Auth
+window.onload = () => { 
+  applyLangUI(); 
+  
+  // ให้ Firebase เป็นคนบอกเองว่ามีใครล็อกอินค้างไว้ไหม
+  auth.onAuthStateChanged((user) => {
+    if (user) {
+      currentUser = user.uid;
+      document.getElementById('authOverlay').classList.remove('show'); 
+      initApp();
+    } else {
+      currentUser = null;
+      document.getElementById('authOverlay').classList.add('show');
+    }
+  });
+};
+  
 /* ================= LANG SYSTEM ================= */
 function toggleLanguage() { currentLang = currentLang === 'th' ? 'en' : 'th'; localStorage.setItem(LANG_KEY, currentLang); showToast('toastLang'); applyLangUI(); renderAllViews(); }
 function applyLangUI() {
@@ -457,9 +519,25 @@ function applyLangUI() {
   document.getElementById('lblTaskType').innerText = l.lblTaskType; document.getElementById('lblTaskName').innerText = l.lblTaskName; document.getElementById('lblTaskDate').innerText = l.lblTaskDate; document.getElementById('lblTaskTime').innerText = l.lblTaskTime; document.getElementById('lblTaskSubj').innerText = l.lblTaskSubj; document.getElementById('btnManageSubj').innerText = l.btnManageSubj; document.getElementById('lblTaskSubmit').innerText = l.lblTaskSubmit; document.getElementById('lblTaskWorkType').innerText = l.lblTaskWorkType; document.getElementById('lblTaskTeammates').innerText = l.lblTaskTeammates; document.getElementById('lblTaskResp').innerText = l.lblTaskResp; document.getElementById('lblTaskLoc').innerText = l.lblTaskLoc; document.getElementById('lblTaskLink').innerText = l.lblTaskLink; document.getElementById('lblTaskNotes').innerText = l.lblTaskNotes; document.getElementById('btnDel').innerText = l.btnDel; document.getElementById('btnSaveTask').innerText = l.btnSaveTask;
   document.getElementById('f_title').placeholder = l.phTaskName; document.getElementById('f_teammates').placeholder = l.phTeammates; document.getElementById('f_responsible').placeholder = l.phResp; document.getElementById('f_location').placeholder = l.phLoc; document.getElementById('f_notes').placeholder = l.phNotes;
   document.getElementById('optSubmitOnline').innerText = translateSys('ส่งออนไลน์ (e-learning/Classroom)'); document.getElementById('optSubmitPaper').innerText = translateSys('ส่งเอกสาร/กระดาษ'); document.getElementById('optSubmitEmail').innerText = translateSys('ส่งทางอีเมล'); document.getElementById('optSubmitOther').innerText = translateSys('อื่นๆ'); document.getElementById('radSingle').innerText = translateSys('เดี่ยว'); document.getElementById('radPair').innerText = translateSys('คู่'); document.getElementById('radGroup').innerText = translateSys('กลุ่ม');
-  if(currentAuthMode === 'login') { document.getElementById('authTitle').innerText = l.authTitle; document.getElementById('authSubtitle').innerText = l.authSub; document.getElementById('authMainBtn').innerText = l.authBtn; document.getElementById('authSwitchMode').innerText = l.authModeReg; document.getElementById('authForgotBtn').innerText = l.authModeForgot; } 
-  else if(currentAuthMode === 'register') { document.getElementById('authTitle').innerText = (currentLang==='th')?'ลงทะเบียน':'Register'; document.getElementById('authSubtitle').innerText = (currentLang==='th')?'ตั้งรหัสผ่านสำหรับเข้าใช้งานครั้งต่อไป':'Set a password for next login'; document.getElementById('authMainBtn').innerText = (currentLang==='th')?'สมัครใช้งาน':'Register'; document.getElementById('authSwitchMode').innerText = l.authModeLogin; } 
-  else { document.getElementById('authTitle').innerText = (currentLang==='th')?'รีเซ็ตรหัสผ่าน':'Reset Password'; document.getElementById('authSubtitle').innerText = (currentLang==='th')?'ใส่รหัสนักศึกษาเพื่อตั้งรหัสผ่านใหม่':'Enter ID to set new password'; document.getElementById('authMainBtn').innerText = (currentLang==='th')?'เปลี่ยนรหัสผ่าน':'Reset'; document.getElementById('authSwitchMode').innerText = l.authModeBack; }
+  
+  // === แก้ไขจุดสลับโหมด ล็อกอิน-สมัครสมาชิก ตรงนี้ครับ ===
+  if(currentAuthMode === 'login') { 
+    document.getElementById('authTitle').innerText = l.authTitle; document.getElementById('authSubtitle').innerText = l.authSub; document.getElementById('authMainBtn').innerText = l.authBtn; 
+    document.getElementById('authSwitchMode').innerText = l.authModeReg; 
+    document.getElementById('authSwitchMode').onclick = () => switchAuthMode('register'); // กำหนดให้กดแล้วไปหน้า สมัคร
+    document.getElementById('authForgotBtn').innerText = l.authModeForgot; 
+  } 
+  else if(currentAuthMode === 'register') { 
+    document.getElementById('authTitle').innerText = (currentLang==='th')?'ลงทะเบียน':'Register'; document.getElementById('authSubtitle').innerText = (currentLang==='th')?'ตั้งรหัสผ่านสำหรับเข้าใช้งานครั้งต่อไป':'Set a password for next login'; document.getElementById('authMainBtn').innerText = (currentLang==='th')?'สมัครใช้งาน':'Register'; 
+    document.getElementById('authSwitchMode').innerText = l.authModeLogin; 
+    document.getElementById('authSwitchMode').onclick = () => switchAuthMode('login'); // กำหนดให้กดแล้วไปหน้า ล็อกอิน
+  } 
+  else { 
+    document.getElementById('authTitle').innerText = (currentLang==='th')?'รีเซ็ตรหัสผ่าน':'Reset Password'; document.getElementById('authSubtitle').innerText = (currentLang==='th')?'ใส่รหัสนักศึกษาเพื่อตั้งรหัสผ่านใหม่':'Enter ID to set new password'; document.getElementById('authMainBtn').innerText = (currentLang==='th')?'เปลี่ยนรหัสผ่าน':'Reset'; 
+    document.getElementById('authSwitchMode').innerText = l.authModeBack; 
+    document.getElementById('authSwitchMode').onclick = () => switchAuthMode('login'); // กำหนดให้กดแล้วกลับไปหน้า ล็อกอิน
+  }
+
   document.getElementById('lblAuthId').innerText = l.authId; document.getElementById('auth_id').placeholder = l.authId; document.getElementById('lblAuthPass').innerText = l.authPass; document.getElementById('auth_pass').placeholder = l.authPass; document.getElementById('lblAuthPass2').innerText = l.authPass2; document.getElementById('auth_pass2').placeholder = l.authPass2;
   if(currentUser) { buildFilterChips(); buildCategoryPicker(); refreshSubjectDropdown(); renderSubjectList(); }
 }
