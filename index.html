@@ -412,12 +412,12 @@ function loadData(){
 
 function persistTasks(){ 
   if(currentUser) {
-    db.ref('users/' + currentUser + '/tasks').set(tasks);
+    db.ref('shared_board/tasks').set(tasks);
   }
 } 
 function saveSubjects(){ 
   if(currentUser) {
-    db.ref('users/' + currentUser + '/subjects').set(subjects);
+    db.ref('shared_board/subjects').set(subjects);
   }
 }
 
@@ -633,7 +633,6 @@ function saveTask(){
 }
 function deleteCurrentTask(){ if(editingTaskId) quickDelete(editingTaskId); closeOverlay('taskOverlay'); editingTaskId = null; }
 
-window.onload = () => { applyLangUI(); const activeSession = sessionStorage.getItem('suki-current-user'); if(activeSession) { currentUser = activeSession; document.getElementById('authOverlay').classList.remove('show'); initApp(); } else { document.getElementById('authOverlay').classList.add('show'); } };
   /* ================= UI ENHANCEMENTS ================= */
 // ทำให้กดพื้นที่สีเทาข้างนอก Modal แล้วเป็นการปิดหน้าต่าง (ให้ความรู้สึกเหมือนใช้แอป)
 window.addEventListener('click', function(event) {
